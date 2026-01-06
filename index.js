@@ -4,8 +4,8 @@ const express = require("express");
 const nodemailer = require("nodemailer");
 const cors = require("cors");
 const { createClient } = require('@supabase/supabase-js');
+ require('dotenv').config();
 const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_KEY);
-
 const app = express();
 app.use(express.json());
 app.use(cors());
@@ -29,18 +29,15 @@ app.post("/webhook", async (req, res) => {
   }
 
   async function booking(agent) {
-    const { destination, departure, date, number, email, phone } = agent.parameters;
+    const { destination, departure, date } = agent.parameters;
 
     const { data, error } = await supabase
-      .from('bookings')
+      .from('booking')
       .insert([
         {
           destination: destination,
           departure: departure,
           travel_date: date,
-          number_of_people: number,
-          email: email,
-          phone: phone
         },
       ]);
 
@@ -51,17 +48,13 @@ app.post("/webhook", async (req, res) => {
     }
 
     agent.add(
-      `Hi there, Your booking has been registered for ${destination} from ${departure} on ${date} for ${number} person. We sent you email at ${email} and sent a message on your number ${phone}`
+      `Hi there, Your booking has been registered for ${destination} from ${departure} on ${date}.`
     );
-
-    console.log("Number of People", number);
-    console.log("User Email", email);
-    console.log("User Phone Number:", phone);
   }
 
   let intentMap = new Map();
   intentMap.set("Default Welcome Intent", hi);
-  intentMap.set("reservation", booking);
+  intentMap.set("booking", booking);
   agent.handleRequest(intentMap);
 });
 app.listen(PORT, () => {
